@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block content %}
+    {# 向当前页面提交post请求需要加 {% csrf_token %}   #}
+    {% csrf_token %}
+    <h3 class="text-center">{{ article_obj.title }}</h3>
+    <div>{{ article_obj.content|safe }}</div>
+    {# |safe过滤器 表示 渲染页面时不进行标签字符串转义  #}
+    {# 父级 class = "clearfix" 表示 清除浮动 #}
+    <div class="clearfix">
+        <div id="div_digg">
+            <div class="diggit action">
+                {# 从 Article表中读取 up_count 点赞数 #}
+                <span class="diggnum" id="digg_count">{{ article_obj.up_count }}</span>
+            </div>
+            <div class="buryit action">
+                <span class="burynum" id="bury_count">{{ article_obj.down_count }}</span>
+            </div>
+            <div class="clear"></div>
+            <div class="diggword" id="digg_tips" style="color: red;"></div>
+        </div>
+    </div>
+
+
+    <div class="comments list-group">
+
+        {# 评论树 思路：先放根评论，再根据子评论的 parent_comment_id 和 父评论的 主键值 ，把子评论添加到根评论的下面 #}
+        <p class="tree_btn">评论树</p>
+
+        <ul class="comment_tree comment_list">
+            {# 里面不要写任何数据，让其动态的去添加 #}
+        </ul>
+
+        <script>
+            {# .one() 表示 一次性事件 #}
+            $(".tree_btn").one("click",function () {
+                $.ajax({
+                    url:"/get_comment_tree/",
+                    type:"get",
+                    data:{
+                        "article_id":"{{ article_obj.pk }}"
+                    },
+                    success:function (comment_list) {
+                        console.log(comment_list);
+
+                        $.each(comment_list,function (index,comment_obj) {
+                            var pk = comment_obj.pk;
+                            var content = comment_obj.content;
+                            var parent_comment_id = comment_obj.parent_comment_id;
+
+                            {# 给 div 添加一个自定义的 comment_id 属性，属性值为它在Comment表中的主键值 #}
+                            var str = `
+                                <li class="list-group-item comment_item" comment_id="${pk}">
+                                    <span>${content}</span>
+                                </li>
+                            `;
+
+                            if (!parent_comment_id){
+                                {#!parent_comment_id 表示 parent_comment_id 为空，即没有父评论 #}
+
+                                {# 添加根评论 #}
+                                {# 把上面的 str  放到 "comment_tree"里面 #}
+                                $(".comment_tree").append(str);
+                            }else {
+                                {# 添加子评论 #}
+                                {# 找到 主键值pk 等于 该评论 parent_comment_id 的评论，然后将这条子评论插到该父评论下面 #}
+                                $("[comment_id="+parent_comment_id+"]").append(str);
+                                {# "[comment_id="+parent_comment_id+"]"：利用字符串拼接出 属性选择器  #}
+
+                            }
+
+                        })
+
+                    }
+                })
+            })
+        </script>
+
+
+        <p>评论列表</p>
+        {# render渲染根评论 #}
+        {# ul class="list-group" 表示列表组   #}
+        <ul class="list-group comment_list">
+            {% for comment in comment_list %}
+                <li class="list-group-item">
+                    <div>
+                        {# 楼层 #}
+                        <a href=""># {{ forloop.counter }}楼</a> &nbsp;&nbsp;
+                        <span>{{ comment.create_time|date:"Y-m-d H:i" }}</span> &nbsp;&nbsp;
+                        <a href="/{{ comment.user.username }}/">{{ comment.user.username }}</a>
+                        {# 下面a 标签中的 username 和 comment_pk 属性是自定义属性，用于储存 当前评论的用户名 和 当前评论在Comment表中的主键值 #}
+                        <a class="pull-right reply_btn" username="{{ comment.user.username }}"
+                           comment_pk="{{ comment.pk }}">回复</a>
+                    </div>
+
+                    {# 判断这条评论是否为子评论；如果是子评论就显示出它的父评论相关信息 #}
+                    {% if comment.parent_comment_id %}
+                        <div class="pid_info well">
+                            <p>
+                                {{ comment.parent_comment.user.username }}:{{ comment.parent_comment.content }}
+                            </p>
+                        </div>
+                    {% endif %}
+
+                    <div class="comment_con">
+                        <p>{{ comment.content }}</p>
+                    </div>
+                </li>
+            {% endfor %}
+
+        </ul>
+        <p>发表评论</p>
+        <p>
+            昵称：<input type="text" id="tbCommentAuthor" class="author" disabled="disabled" size="50"
+                      value="{{ request.user.username }}">
+        </p>
+        <p>评论内容：</p>
+        <textarea name="" id="comment_content" cols="60" rows="10"></textarea>
+        <p>
+            <button class="btn btn-default comment_btn">提交评论</button>
+        </p>
+    </div>
+
+    <script>
+        // 点赞请求
+        $("#div_digg .action").click(function () {
+            {# 通过 .hasClass("diggit") 的方式区分点击的是“支持”（class="diggit"）还是“反对”（class="buryit"）；“支持”为true，“反对”为false #}
+            var is_up = $(this).hasClass("diggit");
+            console.log(is_up);
+            $.ajax({
+                url: "/digg/",
+                type: "post",
+                {# data：哪个用户对哪篇文章做了支持还是反对；点赞人即为当前登陆人，所以点赞人不用传给后台（直接从session中取）#}
+                data: {
+                    "is_up": is_up,
+                    "article_id": "{{ article_obj.pk }}",
+                    "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val()
+                },
+                success: function (data) {
+                    if (data.state) {  // 该用户没有对这篇文章做过操作
+                        if (is_up) { // 应该用 is_up 来判断是 点赞 还是反对
+                            var val = parseInt($("#digg_count").text());  // 原先的点赞数; $("#digg_count").text()是 字符串 格式，加1之前需要先转化为 数字 类型，parseInt()
+                            $("#digg_count").text(val + 1);  // js 弱类型语言
+                        } else {
+                            var val = parseInt($("#bury_count").text());
+                            $("#bury_count").text(val + 1);
+                        }
+
+                    } else { // 该用户已经对这篇文章做过操作
+                        if (data.handled) {  // 已经点过赞
+                            $("#digg_tips").html("您已经推荐过！")
+                        } else {
+                            $("#digg_tips").html("您已经反对过！")
+                        }
+                    }
+                }
+            })
+        });
+        {# 不管是点赞还是评论，当前点赞（评论）人都为当前登陆人 #}
+        {# urlencoded 的请求头（编码） 发送过去的数据是 字符串 格式 #}
+
+        {# 评论请求 #}
+        var pid = "";  // 父评论id默认为空（全局变量）
+        $(".comment_btn").click(function () {
+
+            var content = $("#comment_content").val();
+
+            {#判断pid是否为空；如果不为空说明是子评论，评论内容需要从第一个换行符处截取#}
+            if (pid) {
+                var index = content.indexOf("\n");
+                content = content.slice(index + 1);
+                // slice() 方法可从已有的数组中返回选定的元素。
+                // slice()方法可提取字符串的某个部分，并以新的字符串返回被提取的部分。
+                // 语法： arrayObject.slice(start,end)
+            }
+
+            $.ajax({
+                url: "/comment/",
+                type: "post",
+                data: {
+                    "csrfmiddlewaretoken": $("[name='csrfmiddlewaretoken']").val(),
+                    "article_id": "{{ article_obj.pk }}",
+                    "content": content,
+                    "pid": pid
+                },
+                success: function (data) {
+                    {#利用ajax渲染页面#}
+                    var create_time = data.create_time;
+                    var username = data.username;
+                    var content = data.content;
+
+                    {# 反引号 ``是ES6的语法，ES6能利用 ${变量名} 的方法把变量嵌入到 字符串中；如果利用 js 就只能利用 + 拼接 #}
+                    {# 将Ajax返回回来的数据 插入到下面的标签中 #}
+                    var str = `
+                <li class="list-group-item">
+                    <div>
+                        <span>${create_time}</span>  &nbsp;&nbsp;
+                        <a href="/{username}/">${username}</a>
+                    </div>
+                    <div class="comment_con">
+                       <p>${content}</p>
+                    </div>
+                </li>
+                `;
+
+                    {#判断该评论是否为子评论#}
+                    if (pid) {
+                        var parent_username = data.parent_username;
+                        var parent_content = data.parent_content;
+
+                        var str = `
+                <li class="list-group-item">
+                    <div>
+                        <span>${create_time}</span>  &nbsp;&nbsp;
+                        <a href="/{username}/">${username}</a>
+                    </div>
+                    <div class="pid_info well">
+                            <p>
+                                ${parent_username}:${parent_content}
+                            </p>
+                        </div>
+                    <div class="comment_con">
+                       <p>${content}</p>
+                    </div>
+                </li>
+                `;
+
+                    }
+
+                    {# 将上面的 li 标签插入到评论评论列表的 ul 中 #}
+                    $("ul.comment_list").append(str);
+
+                    {#提交完评论后需要把pid改成默认的空值#}
+                    pid = "";
+                    {#清空评论框#}
+                    $("#comment_content").val("")
+                }
+            })
+        })
+
+        {# 回复按钮事件（子评论） #}
+        $(".reply_btn").click(function () {
+            $("#comment_content").focus(); // .focus() 表示获取焦点
+            var val = "@" + $(this).attr("username") + "\n";  // $(this).attr("username") 表示 获取该DOM元素的 username这个自定义属性和属性值
+            $("#comment_content").val(val);
+
+            {#    点击“回复”按钮，pid要变成 父评论的主键值 #}
+            pid = $(this).attr("comment_pk");
+        })
+
+    </script>
+{% endblock %}
+

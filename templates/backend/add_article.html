@@ -1,0 +1,43 @@
+{% extends "backend/base.html" %}
+
+{% block content %}
+    <form action="" method="post">
+        {# cdrftoken 要写在 form 表单里面 #}
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="title">标题</label>
+            <input type="text" name="article_title" class="form-control" id="title" placeholder="标题">
+        </div>
+        <div class="form-group">
+            <label for="content">内容</label>
+            <textarea class="form-control" name="article_content" id="content" cols="30" rows="10"></textarea>
+        </div>
+        <button type="submit" class="btn btn-default pull-right">提交</button>
+    </form>
+    <script src="/static/js/jquery-3.3.1.js"></script>
+    <script charset="utf-8" src="/static/blog/kindeditor/kindeditor-all.js"></script>
+
+    <script>
+        KindEditor.ready(function (K) {
+            window.editor = K.create('#content', {
+                width: "100%",
+                height: "200px",
+                items: [
+                    'source', '|', 'undo', 'redo', '|', 'preview', 'print', 'template', 'code', 'cut', 'copy', 'paste',
+                    'plainpaste', 'wordpaste', '|', 'justifyleft', 'justifycenter', 'justifyright',
+                    'justifyfull', 'insertorderedlist', 'insertunorderedlist', 'indent', 'outdent', 'subscript',
+                    'superscript', 'clearhtml', 'quickformat', 'selectall', '|', 'fullscreen', '/',
+                    'formatblock', 'fontname', 'fontsize', '|', 'forecolor', 'hilitecolor', 'bold',
+                    'italic', 'underline', 'strikethrough', 'lineheight', 'removeformat', '|', 'image', 'multiimage',
+                    'flash', 'media', 'insertfile', 'table', 'hr', 'emoticons', 'baidumap', 'pagebreak',
+                    'anchor', 'link', 'unlink', '|', 'about'
+                ],
+                uploadJson:"/upload/", // uploadJson对应的是一个路径；指定图片上传的url路径，server端写一个视图（此处是 "/upload/" 路径对应的视图函数 views.upload）来处理上传的图片（同时也有图片的上传地址）
+                extraFileUploadParams:{
+                    csrfmiddlewaretoken:$("[name=csrfmiddlewaretoken]").val()
+                },  // post请求,需要自己组装数据，所以要加上这个 key-value
+                filePostName:"upload_img"  // 所上传文件对应的 key
+            });
+        });
+    </script>
+{% endblock %}

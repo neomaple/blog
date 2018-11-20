@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="/static/blog/bs/css/bootstrap.min.css">
+    {# 当用户访问 /login/ 的GET请求时，浏览器会向服务器发送再次请求：第一次是获取到了 login.html 这个登陆页面；第二次是当浏览器加载 login.html 里面的字符串时，遇到了上面的 link bootstrap，此时浏览器会再次向服务器发送请求获取 bootstrap中相应的文件（页面中有静态文件时都会再次发送请求获取静态文件） #}
+    <style>
+        .login_btn,.reg_btn{
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<h3>登陆页面</h3>
+<div class="container">
+
+    <div class="row">
+        <div class="col-md-6 col-lg-offset-3">
+            {# 利用Ajax传递数据 #}
+            <form>
+                {% csrf_token %}
+                {# form-group能让表单控件之间有间距 #}
+                <div class="form-group">
+                    <label for="user">用户名</label>
+                    {# input标签无需再加 name属性；name属性是用于 type="submit"的input标签提交数据时组装数据，然后服务端利用name属性获取数据；现在我需要利用Ajax自己组装数据 #}
+                    <input type="text" id="user" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="psw">密码</label>
+                    <input type="password" id="psw" class="form-control">
+                </div>
+
+                <div class="form-group">
+                    <label for="">验证码</label>
+                    {# class="row"表示独占一行 #}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control valid_code">
+                        </div>
+                        <div class="col-md-6">
+                            {# img的src可以写一个路径 #}
+                            <img style="width: 260px;height: 33px" id="valid-code" src="/get_validCode_img/" alt="">
+                        </div>
+                    </div>
+                </div>
+                <input type="button" class="btn btn-default login_btn" value="登陆"><span class="error"></span>
+                <a href="/register/" class="btn btn-success pull-right reg_btn">注册</a>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="/static/js/jquery-3.3.1.js"></script>
+<script>
+{#点击验证码 刷新验证码图片#}
+    $("#valid-code").click(function () {
+        $(this)[0].src += "?"
+    })
+    {# 此处不需要用Ajax；通过 .src+="?" 的方式就能局部刷新验证码图片  #}
+
+{# 给登陆按钮添加Ajax事件：登陆验证 #}
+    $(".login_btn").click(function () {
+        $.ajax({
+            url:"",
+            type:"post",
+            data:{
+                "user":$("#user").val(),
+                "psw":$("#psw").val(),
+                "valid_code":$(".valid_code").val(),
+                {# 由于是用Ajax提交数据，所以需要加上下面这句代码；其作用：用于POST请求的csrf验证 #}
+                {# $("[name='csrfmiddlewaretoken']") ：属性选择器#}
+                csrfmiddlewaretoken:$("[name='csrfmiddlewaretoken']").val()
+            },
+            success:function (data) {
+                console.log(data)
+                {# data直接就是 object 类型 #}
+                console.log(typeof data)
+
+                {#data = JSON.parse(data)#}
+                {#查看返回结果：如果通过验证，则跳转；否则把错误信息添加到 class="error"的span标签中#}
+                {# data.user：点语法 #}
+                if (data.user){
+                    {# 前端跳转的方法：location.href="" #}
+                    location.href = "/index/"
+                }
+                else {
+                    $(".error").html(data.msg).css({"margin-left": "10px", color: "red"})
+
+                    {#setTimeout(function () {$(".error").html("")},1000)#}
+
+                }
+            }
+        })
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{% extends "kingadmin/base.html" %}
+{% block body %}
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                        aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://v3.bootcss.com/examples/dashboard/#">
+                    {% block pro_name %}
+                        Project name
+                    {% endblock %}
+                </a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="https://v3.bootcss.com/examples/dashboard/#">{{ request.user }}</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">更多操作 <span class="caret"></span></a>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                            <li><a href="/logout/">注销</a></li>
+
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">Separated link</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-3 col-md-2 sidebar">
+                <ul class="nav nav-sidebar">
+
+                    {# 从数据库中动态读取菜单 #}
+                    {# request.user 这个变量全局都能直接用；多对多关系时，必须要 .all()才能遍历 #}
+                    {# 先获取该用户对象对应的所有 Role对象；正向查询靠字段 #}
+                    {% for role in request.user.role.all %}
+                        {# 获取该 Role 对象 对应的所有 Menu对象；正向查询靠字段 #}
+                        {% for menu in role.menus.all %}
+                            {# 通过 {% url "name" %} 反向解析出其对应的 路径 #}
+                            {% if request.path == menu.url_name %}
+                                <li class="active"><a href="{{ menu.url_name }}">{{ menu.name }}</a></li>
+                                {% else %}
+                                <li><a href="{{ menu.url_name }}">{{ menu.name }}</a></li>
+                            {% endif %}
+
+                            {# <a href=""></a> 的 href=""中也可以写 {% if xx %}{{ xxx }}{% else %}{{ yy }}{% endif %} 这种流程控制语句 #}
+                        {% endfor %}
+
+                    {% endfor %}
+
+                </ul>
+
+            </div>
+            <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                {% block right-content-container %}
+                    <h2 class="page-header">Dashboard</h2>
+                {% endblock %}
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

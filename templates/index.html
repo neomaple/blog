@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="/static/blog/bs/css/bootstrap.min.css">
+    {# 先引入 jquery 再引入 bootstrap的js；Bootstrap的js是基于 jquery #}
+    <script src="/static/js/jquery-3.3.1.js"></script>
+    <script src="/static/blog/bs/js/bootstrap.js"></script>
+
+    <!-- Start of  Zendesk Widget script -->
+    <script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=86957eed-8ef8-4004-ba24-d007f176fcc2"> </script>
+    <!-- End of  Zendesk Widget script -->
+
+    <style>
+        #user_icon {
+            font-size: 18px;
+            margin-right: 10px;
+            vertical-align: -3px;
+        }
+        .pub_info{
+            margin-top: 10px;
+        }
+        .pub_info
+    </style>
+
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                    data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">博客园</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#">随笔 <span class="sr-only">(current)</span></a></li>
+                <li><a href="#">新闻</a></li>
+                <li><a href="#">博文</a></li>
+
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                {# 根据用户是否登陆，显示相应的内容 #}
+                {% if request.user.is_authenticated %}
+                    <li><a href="/{{ request.user.username }}/"><span id="user_icon" class="glyphicon glyphicon-user"></span>{{ request.user.username }}</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                           aria-expanded="false">更多操作 <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">修改密码</a></li>
+                            <li><a href="#">修改头像</a></li>
+                            <li><a href="/logout/">注销</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">Separated link</a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li><a href="/login/">登陆</a></li>
+                    <li><a href="/register">注册</a></li>
+
+                {% endif %}
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-warning">
+                <div class="panel-heading">Panel heading without title</div>
+                <div class="panel-body">
+                    Panel content
+                </div>
+            </div>
+            <div class="panel papel-info">
+                <div class="panel-heading">Panel heading without title</div>
+                <div class="panel-body">
+                    Panel content
+                </div>
+            </div>
+            <div class="panel panel-danger">
+                <div class="panel-heading">Panel heading without title</div>
+                <div class="panel-body">
+                    Panel content
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="article_list">
+                {# 循环读取 article_list 中的文章对象，并将其渲染到浏览器上 #}
+                {% for article in article_list %}
+                    <div class="article-item">
+                        {# 文章标题 #}
+                        <h5><a href="/{{ article.user.username }}/articles/{{ article.pk }}/">{{ article.title }}</a></h5>
+                        <div class="article-desc">
+                            {# class="media-left" 和 class="media-right"：使内容左、右浮 #}
+                            <span class="media-left">
+                                {# 头像图片的获取：Article表中有一个外键字段 user，通过 Article.user.avatar 可获取该用户头像在 "avatars"文件夹下的相对路径，如：avatars/头像.jpg ；所以还需要在这个相对路径前加上 "media/" 这个别名 #}
+                                <a href="/{{ article.user.username }}/"><img width="56" height="56" src="media/{{ article.user.avatar }}" alt=""></a>
+                            </span>
+                            <span class="media-right">
+                                {{ article.desc|safe }}
+                            </span>
+                        </div>
+
+                        {# class="small" 表示小字体 #}
+                        <div class="small pub_info">
+                            <span><a href="/{{ article.user.username }}/">{{ article.user.username }}</a></span> &nbsp;&nbsp;&nbsp;
+                            {# date过滤器：分钟用 i 表示 #}
+                            <span>发布于&nbsp;&nbsp;{{ article.create_time|date:"Y-m-d H:i" }}</span>&nbsp;&nbsp;&nbsp;
+                            <span class="glyphicon glyphicon-comment" style="margin-right: 3px"></span>评论({{ article.comment_count }})&nbsp;&nbsp;
+                            <span class="glyphicon glyphicon-thumbs-up" style="margin-right: 3px"></span>点赞({{ article.up_count }})
+                        </div>
+                    </div>
+                    <hr>
+                {% endfor %}
+
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="panel panel-primary">
+                <div class="panel-heading">Panel heading without title</div>
+                <div class="panel-body">
+                    Panel content
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">Panel heading without title</div>
+                <div class="panel-body">
+                    Panel content
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

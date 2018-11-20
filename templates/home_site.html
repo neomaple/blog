@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="col-md-9">
+        <p><a href="/" class="btn btn-success pull-right return_to_index">博客园</a></p>
+        <div class="article_list">
+            {# 循环读取 article_list 中的文章对象，并将其渲染到浏览器上 #}
+            {% for article in article_list %}
+                <div class="article-item clearfix">
+                    {# 文章标题 #}
+                    <h5><a href="/{{ username }}/articles/{{ article.pk }}/">{{ article.title }}</a></h5>
+                    <div class="article-desc">
+                        {{ article.desc }}
+                    </div>
+
+                    {# class="small" 表示小字体 #}
+                    <div class="small pub_info pull-right">
+                        {# date过滤器：分钟用 i 表示 #}
+                        <span>发布于&nbsp;&nbsp;{{ article.create_time|date:"Y-m-d H:i" }}</span>&nbsp;&nbsp;&nbsp;
+                        <span class="glyphicon glyphicon-comment"
+                              style="margin-right: 3px"></span>评论({{ article.comment_count }})&nbsp;&nbsp;
+                        <span class="glyphicon glyphicon-thumbs-up"
+                              style="margin-right: 3px"></span>点赞({{ article.up_count }})
+                    </div>
+                </div>
+                <hr>
+            {% endfor %}
+
+        </div>
+
+    </div>
+{% endblock %}

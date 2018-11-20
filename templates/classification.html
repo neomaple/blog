@@ -1,0 +1,45 @@
+<div class="header">
+    <div class="content">
+        <p class="title">
+{#            <span>{{ blog.title }}</span>#}
+            <a class="home_site" href="/{{ username }}/">{{ blog.title }}</a>
+            <a href="/cn_backend/" class="backend">后台管理</a>
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+
+        <div class="col-md-3">
+            <div class="panel panel-danger">
+                <div class="panel-heading">我的标签</div>
+                <div class="panel-body">
+                    {% for tag in tag_list %}
+                        {# /{{ username }}/表示个人站点，/{{ tag.0 }}/表示标签名，views.py中的home_site()会根据该标签名过滤文章 #}
+                        <p><a href="/{{ username }}/tag/{{ tag.0 }}/">{{ tag.0 }} （{{ tag.1 }}）</a></p>
+                    {% endfor %}
+
+                </div>
+            </div>
+            <div class="panel panel-warning">
+                <div class="panel-heading">随笔分类</div>
+                <div class="panel-body">
+                    {% for cate in cate_list %}
+                        <p><a href="/{{ username }}/category/{{ cate.title }}/">{{ cate.title }} （{{ cate.c }}）</a></p>
+                    {% endfor %}
+
+                </div>
+            </div>
+            <div class="panel panel-info">
+                <div class="panel-heading">文章归档</div>
+                <div class="panel-body">
+
+                    {% for date in date_list %}
+                        <p><a href="/{{ username }}/archive/{{ date.y_m_date }}/">{{ date.y_m_date }} （{{ date.c }}）</a>
+                        </p>
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>

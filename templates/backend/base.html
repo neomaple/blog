@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>博客后台管理</title>
+    <link rel="stylesheet" href="/static/blog/bs/css/bootstrap.min.css">
+    <script src="/static/js/jquery-3.3.1.js"></script>
+    <script src="/static/blog/bs/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/static/blog/css/backend.css">
+    <!-- Start of  Zendesk Widget script -->
+    <script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=86957eed-8ef8-4004-ba24-d007f176fcc2"> </script>
+<!-- End of  Zendesk Widget script -->
+</head>
+<body>
+
+<div class="header">
+    <div class="content">
+        <p class="title">
+            <a class="backend" href="/cn_backend/">后台管理</a>
+            <a href="/{{ request.user.username }}/" class="home_site">个人首页</a>
+        </p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">操作</div>
+                <div class="panel-body">
+                        <p><a href="/cn_backend/add_article/">添加文章</a></p>
+                </div>
+        </div>
+
+    </div>
+
+        <div class="col-md-9">
+            {% block content %}
+
+            {% endblock %}
+        </div>
+</div>
+
+</body>
+</html>

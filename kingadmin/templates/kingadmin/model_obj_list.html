@@ -1,0 +1,172 @@
+{% extends "kingadmin/index.html" %}
+{# {% extends "" %} 也是和TEMPLATES中的路径进行拼接 #}
+
+{% block right-content-container %}
+    {% load kingadmin_tags %}
+    <ol class="breadcrumb">
+        <li><a href="/kingadmin">Home</a></li>
+        <li><a href="/kingadmin/{{ app_name }}/">{{ app_name }}</a></li>
+        <li class="active">{{ model_name }}</li>
+    </ol>
+
+
+    {% if admin_class.search_fields %}
+        <form class="form-inline">
+            <div class="form-group" style="margin:10px 0">
+                <input name="_q" type="search" class="form-control" value="{{ search_text }}"
+                       placeholder="{% for search_field in admin_class.search_fields %}{{ search_field }},{% endfor %}">
+            </div>
+            <button type="submit" class="btn btn-success">Search</button>
+
+            {# 把过滤条件添加到隐形input标签中 #}
+            {% for k,v in admin_class.filter_conditions.items %}
+                <input type="hidden" name="{{ k }}" value="{{ v }}">
+            {% endfor %}
+            {# 把排序条件添加到隐形 input 标签 #}
+            {% for k,v in sorted_condition.items %}
+                <input type="hidden" name="_o" value="{{ v }}">
+            {% endfor %}
+            {# 实现的效果：搜索可以在过滤和排序的基础上进行 #}
+
+        </form>
+    {% endif %}
+
+    {# 当 list_filter中有值时，才显示 过滤的<form> #}
+    {% if admin_class.list_filter %}
+        <form class="form-inline form-group" action="">
+            {# 过滤功能 #}
+            {% build_filter_ele admin_class %}
+            <button type="submit" class="btn btn-default">过滤</button>
+        </form>
+    {% endif %}
+
+    <form class="form-group" action="" method="post" onsubmit="return SelectCheck(this)">
+        {% csrf_token %}
+        <div class="col-md-3">
+            <label class="control-label" for="">Action:</label>
+            <select class="form-control-static" name="action">
+                <option value="">-----------------</option>
+                {% for action in admin_class.actions %}
+                    <option value="{{ action }}">{{ action }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <button class="btn btn-primary" type="submit">GO</button>
+        </div>
+
+
+    </form>
+
+    <table class="table table-striped">
+        <thead>
+        <tr class="info">
+            <td><input type="checkbox" onclick="SelectAll(this)"></td>
+            {% if admin_class.list_display %}
+                {# admin_class.list_display表示 自定义Admin中的展示列表 #}
+                {% for column in admin_class.list_display %}
+                    <th><a href="?_o=
+                            {% create_sorted_column_arg column sorted_condition forloop.counter0 %}{% render_filter_sort_args admin_class.filter_conditions search_text %}">
+                        {{ column }}&nbsp;{% render_sort_arrow column sorted_condition %}</a></th>
+                {% endfor %}
+            {% else %}
+                {# 自定义Admin的list_display为空时，只需展示表名和 表的 __str__ #}
+                {# <th>{{ admin_class.model._meta.app_label }}</th> 模板中不能使用._meta ，所以要做一个 tag #}
+                <th>{% get_model_name admin_class %}</th>
+            {% endif %}
+        </tr>
+        </thead>
+
+        <tbody>
+        {# 模板中不能使用 对象和类的反射；想用反射就需要利用自定义标签 #}
+        {% for row_obj in querysets %}
+            <tr>
+            {# 不能删除自己 #}
+            {% if row_obj == request.user %}
+                <td></td>
+                {% else %}
+                <td><input table-row="true" type="checkbox" value="{{ row_obj.pk }}"></td>
+            {% endif %}
+                {% build_table_row row_obj admin_class current_page_num %}
+            </tr>
+        {% endfor %}
+
+        </tbody>
+    </table>
+
+    {# 分页器   #}
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if querysets.has_previous %}
+                <li>
+                    <a href="?_p={% next_previous_page_btn querysets "previous" admin_class.filter_conditions search_text sorted_condition %}"
+                       aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="disabled">
+                    <a href="" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+
+            {% build_paginator querysets admin_class.filter_conditions search_text sorted_condition %}
+
+            {% if querysets.has_next %}
+                <li>
+                    <a href="?_p={% next_previous_page_btn querysets "next" admin_class.filter_conditions search_text sorted_condition %}"
+                       aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% else %}
+                <li class="disabled">
+                    <a href="" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <script>
+        {# 全选框   #}
+
+        function SelectAll(ele) {
+            if ($(ele).prop("checked")) {
+                $("input[table-row]").prop("checked", true)
+            } else {
+                $("input[table-row]").prop("checked", false)
+            }
+        }
+
+        {# 检验 action 和 <option> 是不是都选了 #}
+
+        function SelectCheck(ele) {
+            var selected_action = $("select[name=action]").val();  // 已选择的 action
+            var selected_objs = $("input[table-row]").filter(":checked");     // 已选择的 checkbox
+
+            if (!selected_action) {
+                alert("action不能为空");
+                return false
+            }
+
+            if (selected_objs.length == 0) {
+                alert("需要操作的选项不能为空");
+                return false
+            } else {  // 把选项的 id 放到一个数组中，把该数组放到 <form>的一个隐形 input 标签中
+                selected_ids = [];
+                $.each(selected_objs, function () {
+                    selected_ids.push($(this).val());
+                });
+                var input_ele = "<input type='hidden' name='selected_ids' value=" + JSON.stringify(selected_ids) + ">";
+                $(ele).append(input_ele)
+            }
+
+        }
+
+    </script>
+
+{% endblock %}

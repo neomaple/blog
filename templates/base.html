@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <link rel="stylesheet" href="/static/blog/css/home_site.css">
+    <link rel="stylesheet" href="/static/blog/css/article_detail.css">
+    <link rel="stylesheet" href="/static/blog/bs/css/bootstrap.min.css">
+    <script src="/static/js/jquery-3.3.1.js"></script>
+    <!-- Start of  Zendesk Widget script -->
+    <script id="ze-snippet" src="https://static.zdassets.com/ekr/snippet.js?key=86957eed-8ef8-4004-ba24-d007f176fcc2"> </script>
+    <!-- End of  Zendesk Widget script -->
+</head>
+<body>
+
+
+{# 引入自定义的 my_tag #}
+{% load my_tags %}
+{# 调用 get_classification_data，需要传入 username 这个参数 #}
+{% get_classification_data username %}
+{# 调用完 get_classification_data username 就能把其对应的那一套 html 代码返回到此处 #}
+{# 以article_detail()为例，调用 get_classification_data username 这个 inclusion_tag的流程：进入 urls 控制器 ---> 进入article_detail() 函数 ---> 进入"article_detail.html"，返回 "article_detail.html"之前先渲染这个 html文件 ---> 渲染"article_detail"之前先继承 "base.html" ---> 继承"base.html"时，遇到 "get_classification_data"这个 inclusion_tag ---> 进入 my_tags.py 中的 get_classification_data这个 inclusion_tag,这个inclusion_tag先获取相应的 变量的值，然后把这些变量的值返回给 "classification.html"去渲染，得到一整套的 html标签 ---> 得到的这一整套标签放到调用 这个 inclusion_tag 的地方（此处是"base.html"），得到完整的html标签 ---> 该完整的html标签继承给 "article_detail.html" ---> 把全部渲染好的html标签返回给客户端 #}
+
+<div class="col-md-9">
+    {% block content %}
+
+    {% endblock %}
+
+</div>
+</div>
+</div>
+
+</body>
+
+</html>

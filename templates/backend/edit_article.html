@@ -1,0 +1,31 @@
+{% extends "backend/base.html" %}
+
+{% block content %}
+    <form action="" method="post">
+        {# cdrftoken 要写在 form 表单里面 #}
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="title">标题</label>
+            <input type="text" name="article_title" class="form-control" id="title" placeholder="标题" value="{{ edit_article_obj.title }}">
+        </div>
+        <div class="form-group">
+            <label for="content">内容</label>
+            <textarea class="form-control" name="article_content" id="content" cols="30" rows="10">{{ edit_article_obj.content }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-default pull-right">提交</button>
+    </form>
+    <script src="/static/js/jquery-3.3.1.js"></script>
+    <script charset="utf-8" src="/static/blog/kindeditor/kindeditor-all.js"></script>
+    <script>
+        KindEditor.ready(function (K) {
+            window.editor = K.create('#content',{
+                uploadJson:"/upload/", // uploadJson对应的是一个路径
+                extraFileUploadParams:{
+                    csrfmiddlewaretoken:$("[name='csrfmiddlewaretoken']").val()  // post请求,需要自己组装数据，所以要加上这个 key-value
+                },
+                filePostName:"upload_img"  // 所上传文件对应的 key
+
+            });
+        });
+    </script>
+{% endblock %}

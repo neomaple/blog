@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link rel="stylesheet" href="/static/blog/bs/css/bootstrap.min.css">
+    {# 当用户访问 /login/ 的GET请求时，浏览器会向服务器发送再次请求：第一次是获取到了 login.html 这个登陆页面；第二次是当浏览器加载 login.html 里面的字符串时，遇到了上面的 link bootstrap，此时浏览器会再次向服务器发送请求获取 bootstrap中相应的文件（页面中有静态文件时都会再次发送请求获取静态文件） #}
+    <style>
+        .reg_btn{
+            margin-top: 10px;
+        }
+        .error{
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<h3>注册页面</h3>
+<div class="container">
+
+    <div class="row">
+        <div class="col-md-6 col-lg-offset-3">
+            {# 利用Ajax传递数据 #}
+            <form id="form">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        {# field.auto_id 表示{{ field }}渲染出来的那个input标签的id值 #}
+                        <label for="{{ field.auto_id }}">{{ field.label }}</label>
+                        {# 通过 {{ field }}渲染出来的input标签的id是有规律的：id_字段（id_field） #}
+                        {{ field }}
+                        <span class="error pull-right"></span>
+                    </div>
+                {% endfor %}
+                {# 因为forms组件中没有 头像 字段，所以需要单独处理 头像 上传 #}
+                <div class="form-group">
+                        {# label标签有一个特点：如果 label的for属性值和input的id相等，那么在前端点击这个label标签就相当于点击了这个input标签 #}
+                        <label for="avatar">
+                            头像
+                            {# 具体项目中不要像这样把css写到代码中 #}
+                            <img id="avatar_img" style="margin-left: 20px;width: 60px;height: 60px" src="/static/blog/img/default.jpg" alt="">
+                        </label>
+                    {# 点击label中的img 就相当于点击下面的 input 标签 #}
+                    <input type="file" id="avatar" style="display: none">
+                    {# 点击lable就相当于点击 input 标签，所以可以把上面的 input 标签隐藏掉（display:none） #}
+
+                    {#  ---头像预览的逻辑：#}
+                    {#  1. 获取用户选中的文件对象#}
+                    {#  2. 获取文件对象的路径#}
+                    {#  3. 修改img的src 属性，使src = 文件对象的路径#}
+                    </div>
+
+                <input type="button" class="btn btn-default reg_btn" value="注册">
+
+            </form>
+        </div>
+    </div>
+</div>
+<script src="/static/js/jquery-3.3.1.js"></script>
+<script>
+    {# 头像预览功能 #}
+    {# 给上传头像的 input标签 邦定 change()事件（监听输入框中内容的变化） #}
+    $("#avatar").change(function () {
+        {#alert(123)#}
+
+        {#  1. 获取用户选中的文件对象#}
+        {# 通过 .files 的方法可以获取 type="file"的input 标签中的文件对象 #}
+        var avatar_obj = $(this)[0].files[0];
+
+        {#  2. 获取文件对象的路径 #}
+        {# 获取文件路径时需要 利用一个 文件阅读器 FileReader() #}
+        var reader = new FileReader();  // reader是一个实例对象
+
+        reader.readAsDataURL(avatar_obj);  // reader.readAsDataURL(文件对象) 表示获取该文件的路径；此函数没有返回值，它会把 read 出来的结果放到 reader 这个对象内部；读取的结果可以通过 reader.result() 的方式获取到
+        // readAsDataURL() 方法是新开的一个 异步线程
+
+        {#  3. 修改img的src 属性，使src = 文件对象的路径#}
+        {# 在把第二步获取到的路径赋值给 img的src之前，需要先确保 reader.readAsDataURL(avatar_obj) 这个异步线程已经执行完毕；此时就需要用到 onload 方法 #}
+        {# 给reader对象添加一个 onload 事件：等 reader 加载完之后再执行后面的操作 #}
+        reader.onload = function () {
+            {# reader 不执行完，就不会执行下面的操作 #}
+            {# 让 label 标签中的 img 显示 预览的图片 #}
+            $("#avatar_img").attr("src",reader.result);  // 通过 reader.result获取到文件对象（avatar_obj）的路径
+        }
+    });
+
+    {# 基于Ajax提交数据 #}
+    {#  涉及到文件上传,一定要用 FormData 创建一个新的对象（formdata编码）；固定格式  #}
+    $(".reg_btn").click(function () {
+        var formdata = new FormData();
+
+        {# formdata.append("user",$("#id_user").val()); #}
+        {# formdata.append("pwd",$("#id_psw").val()); #}
+        {# formdata.append("re_psw",$("#id_re_psw").val()); #}
+        {# formdata.append("email",$("#id_email").val()); #}
+        {# 利用Ajax往同一个URL上发送post请求时，需要自己组装 csrfmiddlewaretoken 的键值 #}
+        {#formdata.append("csrfmiddlewaretoken",$("[name='csrfmiddlewaretoken']").val());#}
+        {# 利用 dom对象.files[0] 的方式获取 input 标签中的文件对象  #}
+        formdata.append("avatar",$("#avatar")[0].files[0]);  // 这个需要自己手动写
+
+        {# 上面的代码可简写为如下： #}
+        {# console.log($("#form").serializeArray()); // $("#form").serializeArray() 是一个数组的形式，数组里面是 object（对象）#}
+        {# 循环 $("#form").serializeArray() 这个数组 #}
+        var request_data = $("#form").serializeArray();
+        $.each(request_data,function (index,element) {  // $.each()也是遍历； index表示索引，element表示 数组中的对象
+            formdata.append(element.name,element.value);  //  element.name 表示 表单控件的 name属性值，element.value 表示 表单控件的 value属性值
+        });
+
+        $.ajax({
+            url:"",
+            type:"post",
+            contentType:false,
+            processData:false,
+            data:formdata,
+            success:function (data) {
+                if (data.user){
+                    // 注册成功，则进入登陆页面
+                    location.href = "/login/"
+                }
+                {# 为input 标签添加错误信息 #}
+                else { // 注册失败
+                    {# 展示错误信息前先把原先的错误信息清空，并将其父级元素中的 class="has-error"移除 #}
+                    $("span.error").html("");
+                    $(".form-group").removeClass("has-error");
+
+                    $.each(data.msg,function (field,error_list) {  // 此时的 data.msg 是服务器发送过来的 form.errors；当两次密码一致时，form.errors 里面也会有 全局钩子 "__all__"
+                        console.log(field,error_list);
+
+                        {# 存放全局钩子错误信息 #}
+                        if (field === "__all__" ){
+                            {# 把“两次密码不一致”的错误信息放到 "确认密码"后面，并给其父级元素添加 class="has-error" #}
+                            $("#id_re_psw").next().html(error_list[0]).parent().addClass("has-error")
+                        }
+
+                        {# 循环 data.msg（form.errors）这个对象（字典）；field是错误信息对应的字段，error_list是错误信息列表 #}
+                        {# input标签的id是有规律的：id_field，错误信息对应的字段是field；可通过这种规律把错误信息添加到对应的 span 标签中 #}
+                        $("#id_"+field).next().html(error_list[0]);
+                    {# next()： 获得匹配元素集合中每个元素紧邻的同胞元素。如果提供选择器，则取回下一个同胞元素中的、匹配该选择器的元素。 #}
+
+                        {# 给表单控件的父级元素添加 "has-error" 的类，能让表单控件边框显示红色 #}
+                        $("#id_"+field).parent().addClass("has-error");
+                    })
+                }
+            }
+        })
+    })
+
+</script>
+</body>
+</html>
