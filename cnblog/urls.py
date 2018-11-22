@@ -24,7 +24,7 @@ from cnblog import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    re_path(r"^kingadmin/",include("kingadmin.urls")),
+    # re_path(r"^kingadmin/",include("kingadmin.urls")),
     path(r"login/",views.login),
     path(r"get_validCode_img/",views.get_validCode_img),
     path(r"index/",views.index),

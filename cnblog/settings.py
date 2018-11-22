@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 'blog.apps.BlogConfig',
     'blog',
-    'kingadmin',
 ]
 
 MIDDLEWARE = [
@@ -138,7 +137,6 @@ USE_TZ = False
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR,"static"),
-    os.path.join(BASE_DIR,"kingadmin/static")
 ]
 
 # 当自己的表继承了 AbstractUser 时，需要加上下面的这行代码
